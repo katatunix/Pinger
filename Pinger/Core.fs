@@ -27,7 +27,8 @@ module Core =
         str.Split ([| ','; '\n' |], StringSplitOptions.RemoveEmptyEntries)
         |> List.ofArray
         |> List.map (fun server ->
-            let arr = server.Split ':'
+            let trimSv = server.Trim()
+            let arr = trimSv.Split ':'
             let address = arr.[0]
             let port = if arr.Length = 2 then parseInt arr.[1] else 0
             { Address = address; Port = port })
