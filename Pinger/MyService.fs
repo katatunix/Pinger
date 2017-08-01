@@ -31,10 +31,7 @@ type MyService () =
             use i = new Intent (this, typeof<AlarmActivity>)
 
             i.AddFlags (ActivityFlags.NewTask) |> ignore
-
-            let time = sprintf "[%s]" (DateTime.Now.ToString ())
-
-            i.PutExtra (AlarmActivity.KEY, time + " Failed servers: " + (makeTextServers fails)) |> ignore
+            i.PutExtra (AlarmActivity.KEY, makeTextServers fails) |> ignore
 
             this.StartActivity i)
 
@@ -47,3 +44,17 @@ type MyService () =
     override this.OnDestroy () =
         log "MyService.OnDestroy"
         agent.Exit ()
+
+type ServiceCallback =
+    abstract OnServiceConnected : MyBinder -> unit
+    abstract OnServiceDisconnected : unit -> unit
+
+type MyServiceConnection (callback : ServiceCallback) =
+    inherit Java.Lang.Object ()
+
+    interface IServiceConnection with
+        member this.OnServiceConnected (name, binder) =
+            callback.OnServiceConnected (binder :?> MyBinder)
+
+        member this.OnServiceDisconnected name =
+            callback.OnServiceDisconnected ()

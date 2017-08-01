@@ -10,6 +10,7 @@ open Android.Util
 module Core =
 
     let log s = Log.Debug ("Pinger", s) |> ignore
+    //let log2 (fmt : Printfn.Str
 
     type Server = { Address : string; Port : int }
 
@@ -27,8 +28,7 @@ module Core =
         str.Split ([| ','; '\n' |], StringSplitOptions.RemoveEmptyEntries)
         |> List.ofArray
         |> List.map (fun server ->
-            let trimSv = server.Trim()
-            let arr = trimSv.Split ':'
+            let arr = server.Trim().Split ':'
             let address = arr.[0]
             let port = if arr.Length = 2 then parseInt arr.[1] else 0
             { Address = address; Port = port })
@@ -57,11 +57,13 @@ module Core =
                     | _ ->
                         log "Connect as host name"
                         client.BeginConnect (server.Address, server.Port, null, null)
-                let success = result.AsyncWaitHandle.WaitOne (TimeSpan.FromSeconds 10.0)
+
+                let notTimeout = result.AsyncWaitHandle.WaitOne (TimeSpan.FromSeconds 10.0)
+                let success = notTimeout && client.Connected
 
                 log (if success then "SUCCESSFUL" else "FAILED: Timeout")
-                if success then
-                    client.Close ()
+
+                client.Close ()
 
                 not success
             with ex ->
@@ -79,35 +81,43 @@ module Core =
 
         let mp = MailboxProcessor.Start(fun inbox ->
 
-            let rec start (info : MonitorInfo) failedCount =
+            let rec start (info : MonitorInfo) =
                 async {
                     log "start ..."
                     let! msgOp = inbox.TryReceive (info.IntervalMins * 60000)
                     match msgOp with
                     | None ->
-                        let fails = tryConnect info.Servers
-                        if fails.IsEmpty then
-                            return! start info 0
-                        elif failedCount = 2 then
+                        let getFails () = tryConnect info.Servers
+                        let fails =
+                            [ 1..2 ]
+
+                            |> List.fold
+                                (fun fails _ ->
+                                    if fails |> List.isEmpty then
+                                        fails
+                                    else
+                                        getFails ())
+                                (getFails ())
+                        
+                        if not fails.IsEmpty then
                             alarm fails
-                            return! start info 0
-                        else
-                            return! start info (failedCount + 1)
+                        return! start info
+
                     | Some msg ->
                         match msg with
-                        | Start info -> return! start info 0
+                        | Start info -> return! start info
                         | Stop -> return! stop ()
                         | Exit -> return ()
                         | Get replyChannel ->
                             replyChannel.Reply (Some info)
-                            return! start info failedCount }
+                            return! start info }
 
             and stop () =
                 async {
                     log "stop ..."
                     let! msg = inbox.Receive ()
                     match msg with
-                    | Start info -> return! start info 0
+                    | Start info -> return! start info
                     | Stop -> return! stop ()
                     | Exit -> return ()
                     | Get replyChannel ->

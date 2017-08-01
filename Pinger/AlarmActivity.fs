@@ -10,13 +10,16 @@ open Android.Media
 
 type R = Pinger.Resource
 
-[<Activity (Label = "S.O.S!!!")>]
+[<Activity (Label = "S.O.S")>]
 type AlarmActivity() =
     inherit Activity()
 
     let mutable mp = null
 
     static member KEY = "fails"
+
+    member private this.GetVib () =
+        this.ApplicationContext.GetSystemService(Context.VibratorService) :?> Vibrator
 
     override this.OnCreate bundle =
         base.OnCreate bundle
@@ -29,8 +32,7 @@ type AlarmActivity() =
         mp <- MediaPlayer.Create (this, R.Raw.yeah)
         mp.Start ()
 
-        let vib = this.ApplicationContext.GetSystemService(Context.VibratorService) :?> Vibrator
-        vib.Vibrate(7000L)
+        this.GetVib().Vibrate(7000L)
 
         let button = this.FindViewById<Button> R.Id.buttonDismiss
         button.Click.Add (fun _ ->
@@ -39,4 +41,5 @@ type AlarmActivity() =
 
     override this.OnDestroy () =
         mp.Stop ()
+        this.GetVib().Cancel()
         base.OnDestroy ()

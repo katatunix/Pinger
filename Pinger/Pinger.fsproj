@@ -78,7 +78,6 @@
     <Compile Include="Core.fs" />
     <Compile Include="AlarmActivity.fs" />
     <Compile Include="MyService.fs" />
-    <Compile Include="MyServiceConnection.fs" />
     <Compile Include="MainActivity.fs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.FSharp.targets" />

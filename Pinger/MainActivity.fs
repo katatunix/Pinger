@@ -59,11 +59,11 @@ type MainActivity () =
                     isMonitoring <- true
                     editTextServers.Enabled <- false
                     editTextInterval.Enabled <- false
-                    this.makeButtonStop ())
+                    this.makeButtonStop())
 
         use i = new Intent (this, typeof<MyService>)
-        let scon = new MyServiceConnection (this)
-        this.ApplicationContext.BindService (i, scon, Bind.AutoCreate) |> ignore
+        let scon = new MyServiceConnection(this)
+        this.ApplicationContext.BindService(i, scon, Bind.AutoCreate) |> ignore
 
     member private this.makeButtonStart () =
         myButton.Text <- "Start"
