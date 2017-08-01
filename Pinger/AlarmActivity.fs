@@ -27,7 +27,7 @@ type AlarmActivity() =
         this.SetContentView R.Layout.Alarm
 
         let textView = this.FindViewById<TextView> R.Id.textViewFails
-        textView.Text <- this.Intent.GetStringExtra AlarmActivity.KEY
+        textView.Text <- "Failed servers: " + (this.Intent.GetStringExtra AlarmActivity.KEY)
 
         mp <- MediaPlayer.Create (this, R.Raw.yeah)
         mp.Start ()
