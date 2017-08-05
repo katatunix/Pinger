@@ -5,31 +5,32 @@ open Android.Content
 open Android.Views
 open Android.Widget
 
+open Core
+open Ui
+
 [<Activity (Label = "Pinger", MainLauncher = true, Icon = "@mipmap/icon")>]
 type MainActivity () =
     inherit Activity ()
 
     let mutable (binder : MyBinder) = null
-    let mutable isMonitoring = false
-
     let mutable editTextServers = null
     let mutable editTextInterval = null
-    let mutable myButton = null
+    let mutable button = null
 
     member private this.GetPref () =
-        this.GetPreferences(FileCreationMode.Private)
+        this.GetPreferences FileCreationMode.Private
 
-    member private this.SaveInfo info =
-        let sp = this.GetPref()
-        let editor = sp.Edit()
-        editor.PutString("servers", makeTextServers info.Servers) |> ignore
-        editor.PutInt("interval", info.IntervalMins) |> ignore
+    member private this.SaveMonitorInfo (i : MonitorInfo) =
+        let pref = this.GetPref()
+        let editor = pref.Edit()
+        editor.PutString("servers", Ui.servers2text i.Servers) |> ignore
+        editor.PutInt("interval", i.Interval) |> ignore
         editor.Commit() |> ignore
 
-    member private this.LoadInfo =
-        let sp = this.GetPref()
-        sp.GetString("servers", ""),
-        sp.GetInt("interval", 1)
+    member private this.LoadMonitorInfo () : MonitorInfo =
+        let pref = this.GetPref ()
+        {   Servers = Ui.text2servers (pref.GetString ("servers", ""))
+            Interval = pref.GetInt ("interval", 1) }
 
     override this.OnCreate bundle =
         base.OnCreate bundle
@@ -38,77 +39,61 @@ type MainActivity () =
 
         editTextServers <- this.FindViewById<EditText> R.Id.editTextServers
         editTextInterval <- this.FindViewById<EditText> R.Id.editTextInterval
+        button <- this.FindViewById<Button> R.Id.myButton
 
-        myButton <- this.FindViewById<Button> R.Id.myButton
-        myButton.Click.Add (fun _ ->
-            if isMonitoring then
-                binder.Stop ()
-                isMonitoring <- false
-                editTextServers.Enabled <- true
-                editTextInterval.Enabled <- true
-                this.makeButtonStart ()
-            else
-                let info = parseMonitorInfo editTextServers.Text editTextInterval.Text
-                if info.Servers.IsEmpty then
-                    Toast.MakeText(this, "No server to monitor", ToastLength.Short).Show()
-                elif info.IntervalMins = 0 then
-                    Toast.MakeText(this, "Invalid interval", ToastLength.Short).Show()
+        button.Click.Add (fun _ ->
+            let model = this.BuildModel ()
+            let proceed =
+                if model.Servers.Enabled then
+                    match parseMonitorInfo editTextServers.Text editTextInterval.Text with
+                    | Error msg ->
+                        Toast.MakeText(this, msg, ToastLength.Short).Show ()
+                        false
+                    | Ok info ->
+                        this.SaveMonitorInfo info
+                        binder.Start info
+                        true
                 else
-                    this.SaveInfo info
-                    binder.Start info
-                    isMonitoring <- true
-                    editTextServers.Enabled <- false
-                    editTextInterval.Enabled <- false
-                    this.makeButtonStop())
+                    binder.Stop ()
+                    true
+            if proceed then
+                model |> buttonPressed |> this.ApplyModel)
 
         use i = new Intent (this, typeof<MyService>)
         let scon = new MyServiceConnection(this)
         this.ApplicationContext.BindService(i, scon, Bind.AutoCreate) |> ignore
 
-    member private this.makeButtonStart () =
-        myButton.Text <- "Start"
-
-    member private this.makeButtonStop () =
-        myButton.Text <- "Stop"
-
-    override this.OnDestroy () =
-        base.OnDestroy ()
-
     interface ServiceCallback with
         member this.OnServiceConnected theBinder =
             binder <- theBinder
 
-            match binder.CurrentMonitorInfo with
-            | None ->
-                isMonitoring <- false
-                let strServers, interval = this.LoadInfo
+            let info, monitoring =
+                match binder.GetMonitorInfo () with
+                | Some i -> i, true
+                | None -> this.LoadMonitorInfo (), false
+           
+            info2model info monitoring
+            |> this.ApplyModel
 
-                editTextServers.Enabled <- true
-                editTextServers.Text <- strServers
-
-                editTextInterval.Enabled <- true
-                editTextInterval.Text <- string interval
-
-                this.makeButtonStart ()
-
-            | Some info ->
-                isMonitoring <- true
-
-                editTextServers.Enabled <- false
-                editTextServers.Text <- makeTextServers info.Servers
-
-                editTextInterval.Enabled <- false
-                editTextInterval.Text <- string info.IntervalMins
-
-                this.makeButtonStop ()
-
-                this.SaveInfo info
-
-                binder.Start info
+            if monitoring then
+                this.SaveMonitorInfo info
             
         member this.OnServiceDisconnected () =
-            binder <- null
-            editTextServers.Enabled <- false
-            editTextInterval.Enabled <- false
-            myButton.Enabled <- false
-            myButton.Text <- "Close this app and open again!"
+            this.BuildModel ()
+            |> serviceDisconnected
+            |> this.ApplyModel
+    
+    member this.ApplyModel (model : MainModel) =
+        editTextServers.Text <- model.Servers.Text
+        editTextServers.Enabled <- model.Servers.Enabled
+
+        editTextInterval.Text <- model.Interval.Text
+        editTextInterval.Enabled <- model.Interval.Enabled
+
+        button.Text <- model.Button.Text
+        button.Enabled <- model.Button.Enabled
+
+    member this.BuildModel () : MainModel =
+        {   Servers = state editTextServers.Text editTextServers.Enabled
+            Interval = state editTextInterval.Text editTextInterval.Enabled
+            Button = state button.Text button.Enabled }

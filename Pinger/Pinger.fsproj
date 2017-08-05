@@ -2,12 +2,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F60AEA60-B733-4E9B-A7F3-0598F692FAE5}</ProjectGuid>
+    <ProjectGuid>{E27843E6-6624-4975-B134-22DDF22B2F3F}</ProjectGuid>
     <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{F2A71F9B-5D33-465A-A702-920D77279786}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <RootNamespace>Pinger</RootNamespace>
     <AssemblyName>Pinger</AssemblyName>
-    <TargetFrameworkVersion>v6.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v7.1</TargetFrameworkVersion>
     <AndroidApplication>True</AndroidApplication>
     <AndroidResgenFile>Resources\Resource.designer.cs</AndroidResgenFile>
     <AndroidResgenClass>Resource</AndroidResgenClass>
@@ -15,7 +15,6 @@
     <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
     <MonoAndroidAssetsPrefix>Assets</MonoAndroidAssetsPrefix>
     <AndroidUseLatestPlatformSdk>true</AndroidUseLatestPlatformSdk>
-    <AndroidLinkMode>None</AndroidLinkMode>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -24,9 +23,8 @@
     <OutputPath>bin\Debug</OutputPath>
     <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <PlatformTarget></PlatformTarget>
-    <AndroidSupportedAbis>x86;armeabi-v7a</AndroidSupportedAbis>
     <AndroidLinkMode>None</AndroidLinkMode>
+    <PlatformTarget></PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -36,13 +34,11 @@
     <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <AndroidManagedSymbols>true</AndroidManagedSymbols>
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <GenerateTailCalls>true</GenerateTailCalls>
     <PlatformTarget></PlatformTarget>
-    <AndroidSupportedAbis>armeabi-v7a;x86</AndroidSupportedAbis>
-    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
-    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <EnableProguard>true</EnableProguard>
-    <AndroidLinkMode>SdkOnly</AndroidLinkMode>
+    <AndroidSupportedAbis>armeabi-v7a;x86</AndroidSupportedAbis>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -58,9 +54,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Resources\raw\" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
     <AndroidResource Include="Resources\layout\Main.axml" />
     <AndroidResource Include="Resources\layout\Alarm.axml" />
@@ -70,12 +63,12 @@
     <AndroidResource Include="Resources\mipmap-xhdpi\Icon.png" />
     <AndroidResource Include="Resources\mipmap-xxhdpi\Icon.png" />
     <AndroidResource Include="Resources\mipmap-xxxhdpi\Icon.png" />
-    <AndroidResource Include="Resources\raw\yeah.mp3" />
     <None Include="Properties\AndroidManifest.xml" />
     <Compile Include="Properties\AssemblyInfo.fs" />
     <AndroidAsset Include="Assets\AboutAssets.txt" />
     <None Include="packages.config" />
     <Compile Include="Core.fs" />
+    <Compile Include="Ui.fs" />
     <Compile Include="AlarmActivity.fs" />
     <Compile Include="MyService.fs" />
     <Compile Include="MainActivity.fs" />

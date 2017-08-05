@@ -1,5 +1,4 @@
-﻿
-namespace Pinger
+﻿namespace Pinger
 
 open Android.App
 open Android.Content
@@ -27,7 +26,7 @@ type AlarmActivity() =
         this.SetContentView R.Layout.Alarm
 
         let textView = this.FindViewById<TextView> R.Id.textViewFails
-        textView.Text <- "Failed servers: " + (this.Intent.GetStringExtra AlarmActivity.KEY)
+        textView.Text <- this.Intent.GetStringExtra AlarmActivity.KEY
 
         mp <- MediaPlayer.Create (this, R.Raw.yeah)
         mp.Start ()
@@ -35,9 +34,7 @@ type AlarmActivity() =
         this.GetVib().Vibrate(7000L)
 
         let button = this.FindViewById<Button> R.Id.buttonDismiss
-        button.Click.Add (fun _ ->
-            mp.Stop ()
-            this.Finish ())
+        button.Click.Add (fun _ -> this.Finish ())
 
     override this.OnDestroy () =
         mp.Stop ()
